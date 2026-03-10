@@ -7,6 +7,11 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
+    "paths": {
+      "ng-awesome-node-auth": [
+        "./dist/ng-awesome-node-auth"
+      ]
+    },
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
@@ -28,6 +33,12 @@
     },
     {
       "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/ng-awesome-node-auth/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/ng-awesome-node-auth/tsconfig.spec.json"
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "ng-awesome-node-auth",
+  "name": "ng-awesome-node-auth-prj",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -37,6 +37,7 @@
     "@angular/cli": "^21.0.1",
     "@angular/compiler-cli": "^21.0.0",
     "jsdom": "^27.1.0",
+    "ng-packagr": "^21.2.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

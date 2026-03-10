@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "ng-awesome-node-auth": {
+    "ng-awesome-node-auth-prj": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -56,16 +56,42 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "ng-awesome-node-auth:build:production"
+              "buildTarget": "ng-awesome-node-auth-prj:build:production"
             },
             "development": {
-              "buildTarget": "ng-awesome-node-auth:build:development"
+              "buildTarget": "ng-awesome-node-auth-prj:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "test": {
           "builder": "@angular/build:unit-test"
+        }
+      }
+    },
+    "ng-awesome-node-auth": {
+      "projectType": "library",
+      "root": "projects/ng-awesome-node-auth",
+      "sourceRoot": "projects/ng-awesome-node-auth/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ng-awesome-node-auth/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ng-awesome-node-auth/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/ng-awesome-node-auth/tsconfig.spec.json"
+          }
         }
       }
     }
