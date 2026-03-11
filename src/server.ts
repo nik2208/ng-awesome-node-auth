@@ -53,7 +53,13 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 // ---- Preview Page: Demo Dashboard (Root) ----
-app.get(['/', '/preview'], (req, res) => {
+app.get(['/', '/preview'], (req, res, next) => {
+  // If the request is from an iframe OR specifically asks for the app view,
+  // we bypass the dashboard and serve the Angular SSR.
+  const isIframe = req.headers['sec-fetch-dest'] === 'iframe' || req.query['view'] === 'app';
+  if (isIframe) {
+    return next();
+  }
   res.sendFile(join(import.meta.dirname, 'preview.html'));
 });
 
