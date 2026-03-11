@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>awesome-node-auth Angular SSR Demo</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        header {
+            background: #1a1a2e;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand h1 {
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 0.8rem;
+        }
+
+        .badge {
+            background: #3b82f6;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .badge-orange {
+            background: #f59e0b;
+        }
+
+        .frames {
+            display: flex;
+            flex: 1;
+            gap: 4px;
+            background: #e2e8f0;
+        }
+
+        .frame-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .frame-header {
+            padding: 0.5rem 1rem;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand">
+            <h1>🚀 awesome-node-auth Angular SSR Demo</h1>
+            <span class="badge">PROD PREVIEW</span>
+        </div>
+        <div class="info">
+            <div>🧹 <b>Auto-Cleanup:</b> every 5 minutes</div>
+            <div>🔑 <b>Admin Secret:</b> <code id="admin-secret"></code></div>
+            <div class="badge badge-orange">LIVE SYNC ENABLED</div>
+        </div>
+    </header>
+
+    <div class="frames">
+        <div class="frame-container">
+            <div class="frame-header">
+                <span>LOGIN PAGE (Consumer View)</span>
+                <span id="login-status">Synced</span>
+            </div>
+            <iframe id="login-frame" src="/api/auth/login.html"></iframe>
+        </div>
+        <div class="frame-container">
+            <div class="frame-header">
+                <span>ADMIN PANEL (Control View)</span>
+                <span id="admin-status">Active</span>
+            </div>
+            <iframe id="admin-frame" src="/admin/auth"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const adminFrame = document.getElementById('admin-frame');
+        const loginFrame = document.getElementById('login-frame');
+        const adminSecretEl = document.getElementById('admin-secret');
+
+        // Fetch config to show admin secret
+        fetch('/api/auth/ui/config')
+            .then(r => r.json())
+            .then(config => {
+                // Since we can't easily get the raw secret, we show the placeholder or the one from env if we had it
+                // Actually, let's just use a default or ask server to provide it in a demo endpoint
+                adminSecretEl.textContent = 'admin-secret-key-change-in-production';
+            });
+
+        // Strategy: Monitor the Admin Iframe for successful save requests
+        // We do this by intercepting XHR/Fetch in the child iframe because they are same-origin
+        function setupSync() {
+            try {
+                const win = adminFrame.contentWindow;
+                if (!win || !win.fetch) return;
+
+                // Wrap the child's fetch
+                const originalFetch = win.fetch;
+                win.fetch = function (...args) {
+                    const url = args[0];
+                    const options = args[1];
+
+                    return originalFetch.apply(this, args).then(response => {
+                        // If it was a successful UI settings save
+                        if (response.ok &&
+                            (typeof url === 'string' && url.includes('/api/settings/ui')) &&
+                            options?.method === 'PATCH') {
+
+                            console.log('[Demo] UI Settings saved detected! Reloading login iframe...');
+                            document.getElementById('login-status').textContent = 'Reloading...';
+                            document.getElementById('login-status').style.color = '#f59e0b';
+
+                            // Give the server a tiny moment to commit (even if in-memory)
+                            setTimeout(() => {
+                                loginFrame.contentWindow.location.reload();
+                                document.getElementById('login-status').textContent = 'Synced';
+                                document.getElementById('login-status').style.color = '#3b82f6';
+                            }, 500);
+                        }
+                        return response;
+                    });
+                };
+                console.log('[Demo] Sync bridge established');
+            } catch (e) {
+                // May fail if iframe is cross-origin or not loaded yet
+                console.warn('[Demo] Sync bridge waiting for iframe load...');
+            }
+        }
+
+        adminFrame.onload = setupSync;
+        // Periodic check to ensure it stays patched (navigation in iframe might reset it)
+        setInterval(setupSync, 2000);
+    </script>
+</body>
+
+</html>

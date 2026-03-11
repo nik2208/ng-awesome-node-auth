@@ -52,6 +52,11 @@ setInterval(() => {
   userStore.clearAll();
 }, 5 * 60 * 1000);
 
+// ---- Preview Page: Demo Dashboard (Root) ----
+app.get(['/', '/preview'], (req, res) => {
+  res.sendFile(join(import.meta.dirname, 'preview.html'));
+});
+
 /**
  * Serve static files from /browser
  */

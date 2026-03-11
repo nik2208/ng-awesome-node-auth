@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-4200}:${PORT:-4200}"
+    env_file:
+      - .env
+    volumes:
+      - ./public/uploads:/app/public/uploads
+    restart: unless-stopped
