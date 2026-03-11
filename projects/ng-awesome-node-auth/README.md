@@ -1,64 +1,109 @@
-# NgAwesomeNodeAuth
+# ng-awesome-node-auth
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.0.
+An elegant, standalone Angular library providing interceptors, guards, and session management for frontends backed by `awesome-node-auth`.
 
-## Code scaffolding
+This library is designed to be **lightweight and 100% tree-shakable**. You only ship the code you actually use.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Installation
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Install the library in your Angular project:
 
 ```bash
-ng generate --help
+npm install ng-awesome-node-auth
 ```
 
-## Building
+## Quick Start
 
-To build the library, run:
+### 1. Configure Providers (`app.config.ts`)
 
-```bash
-ng build ng-awesome-node-auth
+Add `provideAuth` to your application configuration to set up the authentication interceptor and session manager.
+
+```typescript
+import { ApplicationConfig } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideAuth, provideAuthUi } from 'ng-awesome-node-auth';
+import { routes } from './app.routes';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    // Core Auth (Session management, interceptor, CSRF handling)
+    provideAuth({ apiPrefix: '/api/auth' }),
+    
+    // Optional: UI Integration (Theme sync, config fetching)
+    // If you don't call this, 0 bytes of UI code are added to your bundle.
+    provideAuthUi(),
+  ]
+};
 ```
 
-This command will compile your project, and the build artifacts will be placed in the `dist/` directory.
+### 2. Protect Routes (`app.routes.ts`)
 
-### Publishing the Library
+Use `authGuard` to protect private pages and `guestGuard` to redirect already-authenticated users away from login pages.
 
-Once the project is built, you can publish your library by following these steps:
+```typescript
+import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from 'ng-awesome-node-auth';
 
-1. Navigate to the `dist` directory:
-
-   ```bash
-   cd dist/ng-awesome-node-auth
-   ```
-
-2. Run the `npm publish` command to publish your library to the npm registry:
-   ```bash
-   npm publish
-   ```
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
+export const routes: Routes = [
+  { 
+    path: 'login', 
+    component: LoginComponent,
+    canActivate: [guestGuard] // Redirects to '/' if already logged in
+  },
+  { 
+    path: 'dashboard', 
+    component: DashboardComponent,
+    canActivate: [authGuard]  // Redirects to '/login' if not logged in
+  }
+];
 ```
 
-## Running end-to-end tests
+## Optional UI Integration
 
-For end-to-end (e2e) testing, run:
+If you use the built-in Vanilla UI from `awesome-node-auth` alongside your custom Angular frontend (e.g., for login pages or the Admin panel), you can strictly opt-in to UI Integration features.
 
-```bash
-ng e2e
+By adding `provideAuthUi()` to your providers, the library will:
+1. Automatically fetch the backend configuration (`apiPrefix/ui/config`) and expose it via the `UiConfigService`.
+2. Automatically activate the `ThemeService`, which listens for live-preview CSS color updates from the Admin Panel and applies them instantly.
+
+### Using `UiConfigService`
+
+You can use the `UiConfigService` in your components to conditionally show features based on your backend configuration.
+
+```typescript
+import { Component, inject } from '@angular/core';
+import { UiConfigService } from 'ng-awesome-node-auth';
+
+@Component({
+  template: `
+    <div *ngIf="uiConfig.hasFeature('register')">
+      <a routerLink="/register">Register</a>
+    </div>
+  `
+})
+export class LoginComponent {
+  uiConfig = inject(UiConfigService);
+}
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Advanced Configuration (`NgAuthOptions`)
 
-## Additional Resources
+The `provideAuth(options)` function accepts a configuration object with the following properties:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- `apiPrefix` (string): The base path of your auth API. Defaults to `'/auth'`.
+- `homeUrl` (string): Where to redirect authenticated users when they hit a `guestGuard`. Defaults to `'/'`.
+- `loginUrl` (string): Where to redirect unauthenticated users when they hit an `authGuard`. Defaults to `'/login'`.
+- `manageHttpClient` (boolean): Whether the library should automatically provide `HttpClient` with the auth interceptor. Defaults to `true`.
+- `initializeOnStartup` (boolean): Whether to automatically check the session (`/me`) on app startup. Defaults to `true`.
+- `authService` (Type): Pass a custom subclass of `AuthService` if you need to override default behaviors.
+
+## Services
+
+### `AuthService` (Core)
+Provides reactive signals and methods to manage the user's session.
+- `user()`: Signal containing the current `AuthUser` or `null`.
+- `isAuthenticated()`: Computed signal returning true if a user is logged in.
+- `logout()`: Clears the session and redirects to the login page.
+- `checkSession()`: Manually re-fetches the user session from the backend.
+- `refreshToken()`: Manually attempts to refresh the access token using the HttpOnly refresh token cookie.

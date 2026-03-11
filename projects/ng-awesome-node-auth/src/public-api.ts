@@ -33,3 +33,9 @@ export { AuthService } from './lib/auth.service';
 export type { AuthUser } from './lib/auth.service';
 export type { NgAuthOptions } from './lib/auth.config';
 export { NG_AUTH_OPTIONS, AUTH_SERVICE } from './lib/auth.config';
+
+// Optional UI Integration
+export { provideAuthUi } from './lib/provide-ui';
+export { ThemeService } from './lib/theme.service';
+export { UiConfigService } from './lib/ui-config.service';
+export type { UiConfig } from './lib/ui-config.service';
