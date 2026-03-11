@@ -35,7 +35,7 @@ export class UiConfigService {
     readonly config = this._config.asReadonly();
 
     /**
-     * Loads the configuration from the node-auth backend.
+     * Loads the configuration from the awesome-node-auth backend.
      * This is typically called during APP_INITIALIZER.
      */
     async loadConfig(): Promise<void> {
