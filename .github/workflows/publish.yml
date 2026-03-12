@@ -29,10 +29,7 @@ jobs:
         run: npm ci
 
       - name: Build library
-        run: npm run build:lib
-
-      - name: Write .npmrc
-        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > dist/ng-awesome-node-auth/.npmrc
+        run: cd projects/ng-awesome-node-auth && ng build
 
       - name: Publish to npm
         run: |
