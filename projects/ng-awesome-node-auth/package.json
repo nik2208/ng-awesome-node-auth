@@ -1,6 +1,26 @@
 {
   "name": "ng-awesome-node-auth",
   "version": "1.2.2",
+  "description": "Angular client library for the awesome-node-auth ecosystem",
+  "author": "Nicola Brecciaroli",
+  "license": "MIT",
+  "homepage": "https://www.awesomenodeauth.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nik2208/ng-awesome-node-auth-prj.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nik2208/ng-awesome-node-auth-prj/issues"
+  },
+  "keywords": [
+    "auth",
+    "angular",
+    "awesome-node-auth",
+    "authentication",
+    "jwt",
+    "admin-ui",
+    "lib"
+  ],
   "peerDependencies": {
     "@angular/common": "^21.2.0",
     "@angular/core": "^21.2.0"
