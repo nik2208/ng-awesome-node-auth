@@ -28,7 +28,7 @@
   "packageManager": "npm@11.6.4",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nik2208/ng-awesome-node-auth-prj.git"
+    "url": "git+https://github.com/nik2208/ng-awesome-node-auth.git"
   },
   "keywords": [
     "auth",
@@ -42,7 +42,7 @@
   "author": "Nicola Brecciaroli",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nik2208/ng-awesome-node-auth-prj/issues"
+    "url": "https://github.com/nik2208/ng-awesome-node-auth/issues"
   },
   "homepage": "https://www.awesomenodeauth.com/",
   "dependencies": {

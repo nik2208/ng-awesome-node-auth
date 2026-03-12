@@ -7,10 +7,10 @@
   "homepage": "https://www.awesomenodeauth.com/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nik2208/ng-awesome-node-auth-prj.git"
+    "url": "git+https://github.com/nik2208/ng-awesome-node-auth.git"
   },
   "bugs": {
-    "url": "https://github.com/nik2208/ng-awesome-node-auth-prj/issues"
+    "url": "https://github.com/nik2208/ng-awesome-node-auth/issues"
   },
   "keywords": [
     "auth",

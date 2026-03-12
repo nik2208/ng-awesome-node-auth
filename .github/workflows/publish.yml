@@ -32,4 +32,6 @@ jobs:
         run: npm run build:lib
 
       - name: Publish to npm
-        run: npm publish dist/ng-awesome-node-auth --access public --provenance
+        run: |
+          cd dist/ng-awesome-node-auth
+          npm publish --access public --provenance
