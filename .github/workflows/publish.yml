@@ -31,5 +31,5 @@ jobs:
         run: npm run build:lib
 
       - name: Publish to npm
-        working-directory: dist/ng-awesome-node-auth
         run: npm publish --access public --provenance
+        working-directory: ${{ github.workspace }}/dist/ng-awesome-node-auth
