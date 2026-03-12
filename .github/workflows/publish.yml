@@ -31,15 +31,10 @@ jobs:
       - name: Build library
         run: npm run build:lib
 
-      - name: Debug OIDC token
-        run: |
-          curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=npm" | \
-          python3 -c "import sys,json,base64; t=json.load(sys.stdin)['value'].split('.')[1]; print(json.loads(base64.b64decode(t+'==')))"
+      - name: Write .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > dist/ng-awesome-node-auth/.npmrc
 
       - name: Publish to npm
         run: |
           cd dist/ng-awesome-node-auth
           npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
