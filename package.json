@@ -23,8 +23,28 @@
       }
     ]
   },
+  "description": "Official monorepo for ng-awesome-node-auth library and it's Angular SSR demo dashboard",
   "private": true,
   "packageManager": "npm@11.6.4",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nik2208/ng-awesome-node-auth-prj.git"
+  },
+  "keywords": [
+    "auth",
+    "angular",
+    "awesome-node-auth",
+    "authentication",
+    "jwt",
+    "admin-ui",
+    "ssr"
+  ],
+  "author": "Nicola Brecciaroli",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nik2208/ng-awesome-node-auth-prj/issues"
+  },
+  "homepage": "https://www.awesomenodeauth.com/",
   "dependencies": {
     "@angular/common": "^21.0.0",
     "@angular/compiler": "^21.0.0",
