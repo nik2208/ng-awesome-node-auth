@@ -33,12 +33,8 @@ jobs:
 
       - name: Write .npmrc
         run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > dist/ng-awesome-node-auth/.npmrc
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish to npm
         run: |
           cd dist/ng-awesome-node-auth
           npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
