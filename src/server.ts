@@ -7,9 +7,21 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 import authRoutes from './server/auth.routes';
+import { requestContext } from './server/utils/request-context';
 
-import { createAdminRouter } from 'awesome-node-auth';
-import { userStore, settingsStore, uploadDir, ADMIN_SECRET } from './server/auth.config';
+import { createAdminRouter, createApiKeyMiddleware } from 'awesome-node-auth';
+import {
+  userStore,
+  settingsStore,
+  rbacStore,
+  metadataStore,
+  sessionStore,
+  apiKeyStore,
+  webhookStore,
+  telemetryStore,
+  uploadDir,
+  ADMIN_SECRET,
+} from './server/auth.config';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -25,32 +37,49 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// ---- Auth UI Redirects - handle at server level to break SPA routing loops ----
+app.use((req, res, next) => {
+  requestContext.run({ req }, () => next());
+});
+
+// ---- 1. API Key Protection (M2M) ----
+// Protect everything under /api EXCEPT /api/auth (which is handles login/registration)
+app.use('/api', (req, res, next) => {
+  if (req.path.startsWith('/auth')) return next();
+  createApiKeyMiddleware(apiKeyStore)(req, res, next);
+});
+
+// ---- 2. Auth UI Redirects - handle at server level to break SPA routing loops ----
 const authPaths = ['login', 'register', 'forgot-password', 'reset-password', '2fa', 'verify-email'];
 authPaths.forEach(p => {
   app.get(`/${p}`, (req, res) => res.redirect(`/api/auth/ui/${p}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`));
 });
 
-// ---- Auth routes (always mounted so that provideAuth() checkSession() works during prerendering) ----
+// ---- 3. Auth routes (mounted at /api/auth) ----
 app.use('/api/auth', authRoutes);
 console.log('[SERVER] Auth routes mounted');
 
-// ---- Mount the admin router ----
-// This exposes: /admin/auth/users, /admin/auth/users/:id, /admin/auth/settings, etc.
+// ---- 4. Mount the admin router ----
+// Now with full set of stores to enable all tabs
 const adminRouter = createAdminRouter(userStore, {
   adminSecret: ADMIN_SECRET,
   settingsStore,
+  rbacStore,
+  userMetadataStore: metadataStore,
+  sessionStore,
+  apiKeyStore,
+  webhookStore,
   uploadDir,
   apiPrefix: '/api/auth',
+  swagger: true, // Enable swagger UI for documentation
 });
 app.use('/admin/auth', adminRouter);
 console.log('[SERVER] Admin routes mounted');
 
-// ---- Maintenance Timer: Clear in-memory users every 5 minutes ----
+// ---- Maintenance Timer: Clear in-memory users every 30 minutes ----
 setInterval(() => {
-  console.log('[SERVER] Running scheduled user cleanup...');
-  userStore.clearAll();
-}, 5 * 60 * 1000);
+  console.log('[SERVER] Running scheduled store maintenance...');
+  userStore.deleteUser('dummy-test-user').catch(() => { }); // example
+}, 30 * 60 * 1000);
 
 // ---- Preview Page: Demo Dashboard (Root) ----
 app.get(['/', '/preview'], (req, res, next) => {
@@ -108,7 +137,7 @@ if (isMainModule(import.meta.url) || isProcessServer) {
     console.log(`\n[SERVER] ✓ Express server listening on http://localhost:${port}`);
     console.log(`[SERVER] - Demo Dashboard: http://localhost:${port}/`);
     console.log(`[SERVER] - Auth API: http://localhost:${port}/api/auth`);
-    console.log(`[SERVER] - Login UI: http://localhost:${port}/api/auth/login.html`);
+    console.log(`[SERVER] - Tools API: http://localhost:${port}/api/auth/tools`);
     console.log(`[SERVER] - Admin Panel: http://localhost:${port}/admin/auth\n`);
   });
 } else {

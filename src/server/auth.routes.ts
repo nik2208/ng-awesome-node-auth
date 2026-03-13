@@ -1,29 +1,65 @@
 import { Router } from 'express';
-import { createAuthMiddleware, AuthError } from 'awesome-node-auth';
+import {
+  createAuthMiddleware,
+  AuthError,
+  AuthEventBus,
+  AuthTools,
+  createToolsRouter,
+  SseManager,
+  WebhookSender,
+} from 'awesome-node-auth';
 import {
   authConfigurator,
   authConfig,
   userStore,
   settingsStore,
+  rbacStore,
+  metadataStore,
+  sessionStore,
+  apiKeyStore,
+  webhookStore,
+  telemetryStore,
+  googleStrategy,
   uploadDir,
   ADMIN_SECRET,
 } from './auth.config';
 
 const router = Router();
 
-// ---- Middleware for validating auth tokens ----
+
+
+// ---- 1. Event system setup ----
+const bus = new AuthEventBus();
+
+// ---- 2. Tools (SSE, Webhooks, Telemetry) ----
+const authTools = new AuthTools(bus, {
+  telemetryStore,
+  webhookStore,
+  sse: true,
+  sseOptions: {
+    heartbeatIntervalMs: 30000,
+    deduplicate: true,
+  },
+});
+
+// Note: AuthTools doesn't have a listen() method in this version.
+// It process events when track() is called.
+// If your library version had listen(), it's likely removed or replaced by constructor logic.
+
+// ---- 3. Middleware for validating auth tokens ----
 const authMiddleware = createAuthMiddleware(authConfig);
 
-// ---- Mount the main auth router ----
+// ---- 4. Mount the main auth router ----
 // This exposes: /login, /register, /logout, /refresh, /reset-password, /verify-email, etc.
-// Plus: GET /login.html, /register.html, etc. (zero-dependency UI)
+// Now includes session and RBAC stores.
 router.use(
   '/',
   authConfigurator.router({
-    /* NOT NEEDED ON MAIN RELEASE OF awesome-node-auth (non beta)*/
-    /*uiAssetsDir: require.resolve('awesome-node-auth-beta/package.json').replace('package.json', 'dist/ui-assets'),*/
-    /* --------------------------------------------------------- */
     settingsStore,
+    rbacStore,
+    metadataStore,
+    sessionStore,
+    googleStrategy,
     uploadDir,
     onRegister: async (data: any, config: any, options: any) => {
       // Validation
@@ -51,6 +87,16 @@ router.use(
       console.log(`[AUTH] New user registered: ${user.email} (ID: ${user.id})`);
       return user;
     },
+  }),
+);
+
+// ---- 5. Mount the tools router at /tools (relative to /api/auth) ----
+// Exposes: POST /tools/track/:event, GET /tools/telemetry, GET /tools/stream (SSE), etc.
+router.use(
+  '/tools',
+  createToolsRouter(authTools, {
+    authMiddleware,
+    telemetryStore, // Required for GET /tools/telemetry
   }),
 );
 
