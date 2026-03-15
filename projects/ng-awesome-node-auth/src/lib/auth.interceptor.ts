@@ -101,7 +101,7 @@ function handleUnauthorized(
 }
 
 function withCsrf(req: HttpRequest<unknown>): HttpRequest<unknown> {
-    const token = readCookie('csrf-token');
+    const token = readCookie('__Host-csrf-token') || readCookie('__Secure-csrf-token') || readCookie('csrf-token');
     return token ? req.clone({ setHeaders: { 'X-CSRF-Token': token } }) : req;
 }
 
