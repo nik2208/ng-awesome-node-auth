@@ -1,6 +1,6 @@
 {
   "name": "ng-awesome-node-auth-prj",
-  "version": "1.0.0",
+  "version": "1.4.2",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -46,28 +46,31 @@
   },
   "homepage": "https://www.awesomenodeauth.com/",
   "dependencies": {
-    "@angular/common": "^21.0.0",
-    "@angular/compiler": "^21.0.0",
-    "@angular/core": "^21.0.0",
-    "@angular/forms": "^21.0.0",
-    "@angular/platform-browser": "^21.0.0",
-    "@angular/platform-server": "^21.0.0",
-    "@angular/router": "^21.0.0",
-    "@angular/ssr": "^21.2.1",
-    "awesome-node-auth": "^1.2.2",
+    "@angular/common": "^21.2.4",
+    "@angular/compiler": "^21.2.4",
+    "@angular/core": "^21.2.4",
+    "@angular/forms": "^21.2.4",
+    "@angular/platform-browser": "^21.2.4",
+    "@angular/platform-server": "^21.2.4",
+    "@angular/router": "^21.2.4",
+    "@angular/ssr": "^21.2.2",
+    "awesome-node-auth": "^1.4.2",
     "express": "^5.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^21.0.1",
-    "@angular/cli": "^21.0.1",
-    "@angular/compiler-cli": "^21.0.0",
+    "@angular/build": "^21.2.2",
+    "@angular/cli": "^21.2.2",
+    "@angular/compiler-cli": "^21.2.4",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
     "jsdom": "^27.1.0",
     "ng-packagr": "^21.2.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
+  },
+  "overrides": {
+    "undici":"^7.23.1"
   }
 }

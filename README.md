@@ -163,7 +163,12 @@ import { provideAuth, provideAuthUi } from 'ng-awesome-node-auth';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideAuth({ apiPrefix: '/api/auth' }),
+    provideAuth({ 
+      apiPrefix: '/api/auth',
+      // Optional: set to true to handle session expiry manually 
+      // without automatic full-page redirects.
+      headless: false 
+    }),
     provideAuthUi() // For theme synchronization and config-aware UI
   ]
 };

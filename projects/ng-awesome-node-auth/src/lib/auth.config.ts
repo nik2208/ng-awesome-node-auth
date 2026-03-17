@@ -50,6 +50,13 @@ export interface NgAuthOptions {
      * @default true
      */
     initializeOnStartup?: boolean;
+
+    /**
+     * If true, prevents automatic window.location redirects (e.g. on 401/403 or logout).
+     * Useful for apps that want to manage navigation manually.
+     * @default false
+     */
+    headless?: boolean;
 }
 
 /** @internal resolved defaults */
@@ -57,12 +64,14 @@ export function resolveOptions(opts: NgAuthOptions | null): {
     apiPrefix: string;
     homeUrl: string;
     loginUrl: string;
+    headless: boolean;
 } {
     const apiPrefix = opts?.apiPrefix ?? '/auth';
     return {
         apiPrefix,
         homeUrl: opts?.homeUrl ?? '/',
         loginUrl: opts?.loginUrl ?? `${apiPrefix}/ui/login`,
+        headless: opts?.headless ?? false,
     };
 }
 

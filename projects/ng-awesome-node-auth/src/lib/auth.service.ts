@@ -72,9 +72,12 @@ export class AuthService {
     }
 
     refreshToken(): Observable<{ success: boolean; error?: string }> {
-        return this.http.post<{ success: boolean }>(`${this.opts.apiPrefix}/refresh`, {}, { withCredentials: true }).pipe(
-            map(() => ({ success: true })),
-            catchError(err => { this._user.set(null); return of({ success: false, error: err.error?.error || 'Refresh failed' }); })
+        return this.http.post<any>(`${this.opts.apiPrefix}/refresh`, {}, { withCredentials: true }).pipe(
+            map(res => ({ success: res && res.success !== false })),
+            catchError(err => { 
+                this._user.set(null); 
+                return of({ success: false, error: err.error?.error || 'Refresh failed' }); 
+            })
         );
     }
 
@@ -316,7 +319,12 @@ export class AuthService {
 
     deleteAccount(): Observable<{ success: boolean; error?: string }> {
         return this.http.delete<{ success: boolean }>(`${this.opts.apiPrefix}/account`, { withCredentials: true }).pipe(
-            tap(() => { this._user.set(null); if (isPlatformBrowser(this.platformId)) window.location.href = this.opts.loginUrl; }),
+            tap(() => { 
+                this._user.set(null); 
+                if (!this.opts.headless && isPlatformBrowser(this.platformId)) {
+                    window.location.href = this.opts.loginUrl;
+                }
+            }),
             map(() => ({ success: true })),
             catchError(err => of({ success: false, error: err.error?.error || 'Failed to delete account' }))
         );
@@ -330,7 +338,7 @@ export class AuthService {
     private _doLogout(): void {
         this._logoutInProgress = false;
         this._user.set(null);
-        if (isPlatformBrowser(this.platformId)) {
+        if (!this.opts.headless && isPlatformBrowser(this.platformId)) {
             window.location.href = this.opts.loginUrl;
         }
     }
