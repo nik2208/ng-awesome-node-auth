@@ -19,6 +19,12 @@ export interface AuthUser {
     isTotpEnabled?: boolean;
     hasPassword?: boolean;
     lastLogin?: Date;
+    /** Present when the backend is configured with a metadataStore. */
+    metadata?: Record<string, unknown>;
+    /** Present when the backend is configured with an rbacStore. */
+    roles?: string[];
+    /** Present when the backend is configured with an rbacStore. */
+    permissions?: string[];
 }
 
 /**
@@ -117,10 +123,9 @@ export class AuthService {
         );
     }
 
-    register(email: string, password: string, firstName: string, lastName: string): Observable<{ success: boolean; error?: string }> {
-        return this.http.post<{ success: boolean; user: AuthUser }>(`${this.opts.apiPrefix}/register`, { email, password, firstName, lastName }, { withCredentials: true }).pipe(
-            tap(res => { if (res.user) this._user.set(res.user); }),
-            map(() => ({ success: true })),
+    register(email: string, password: string, firstName: string, lastName: string): Observable<{ success: boolean; userId?: string; error?: string }> {
+        return this.http.post<{ success: boolean; userId?: string }>(`${this.opts.apiPrefix}/register`, { email, password, firstName, lastName }, { withCredentials: true }).pipe(
+            map(res => ({ success: true, userId: res.userId })),
             catchError(err => of({ success: false, error: err.error?.error || 'Registration failed' }))
         );
     }
@@ -239,6 +244,13 @@ export class AuthService {
         return this.http.post<{ success: boolean }>(`${this.opts.apiPrefix}/2fa/verify`, { tempToken: token, totpCode: code }, { withCredentials: true }).pipe(
             switchMap(res => res.success ? this.checkSession().pipe(map(() => ({ success: true }))) : of({ success: false })),
             catchError(err => of({ success: false, error: err.error?.error || 'Invalid 2FA code' }))
+        );
+    }
+
+    disable2fa(): Observable<{ success: boolean; error?: string }> {
+        return this.http.post<{ success: boolean }>(`${this.opts.apiPrefix}/2fa/disable`, {}, { withCredentials: true }).pipe(
+            switchMap(res => res.success ? this.checkSession().pipe(map(() => ({ success: true }))) : of({ success: false })),
+            catchError(err => of({ success: false, error: err.error?.error || 'Failed to disable 2FA' }))
         );
     }
 

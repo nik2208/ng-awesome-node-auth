@@ -134,7 +134,7 @@ function isAuthEndpoint(url: string, prefix: string): boolean {
         `${prefix}/register`,
         `${prefix}/forgot-password`,
         `${prefix}/reset-password`,
-        `${prefix}/2fa`,
+        `${prefix}/2fa/verify`,
         `${prefix}/verify-email`,
         // /me is intentionally omitted so 401s on it trigger a token refresh
     ].some(p => url.includes(p));
