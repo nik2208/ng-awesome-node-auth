@@ -1,0 +1,44 @@
+# Dipendenze (vanno installate nel container, non copiate)
+node_modules/
+vendor/
+.venv/
+env/
+
+# Credenziali e Segreti
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.aws/
+.ssh/
+
+# Cartelle di Build e Output
+dist/
+build/
+out/
+.next/
+.nuxt/
+bin/
+obj/
+
+# File di Log e Debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Git e Strumenti di Configurazione
+.git/
+.gitignore
+.gitattributes
+.svn/
+.hg/
+
+# File di Sistema e IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
