@@ -14,7 +14,8 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor]),
     ),
     provideAuth({
-      apiPrefix: '/api/auth'
+      apiPrefix: '/api/auth',
+      headless: false // default: false (auto-redirects to login). Set to true for manual control.
     }),
   ]
 };
