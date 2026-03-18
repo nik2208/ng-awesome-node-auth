@@ -4,82 +4,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>awesome-node-auth Angular SSR Demo</title>
+    <title>awesome-node-auth | Demo Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --bg-page: #f0f4f8;
+            --bg-card: #ffffff;
+            --text-main: #1a202c;
+            --text-muted: #718096;
+            --header-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
         body {
             margin: 0;
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            background: #f8fafc;
+            background: var(--bg-page);
+            color: var(--text-main);
         }
 
+        /* ── Header ── */
         header {
-            background: #1a1a2e;
+            background: var(--header-gradient);
             color: white;
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 100;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 12px;
         }
+
+        .brand-icon { font-size: 1.8rem; }
 
         .brand h1 {
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             margin: 0;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(90deg, #e2e8f0, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .info {
+        .header-badges {
+            display: flex;
+            gap: 10px;
+            margin-left: 20px;
+        }
+
+        .badge-link {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.2s;
+        }
+
+        .badge-link:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-1px);
+        }
+
+        .badge-ng { background: rgba(196, 59, 60, 0.8); }
+        .badge-node { background: rgba(51, 153, 51, 0.8); }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            color: #cbd5e0;
+            text-decoration: none;
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.15);
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-            font-size: 0.8rem;
+            gap: 6px;
         }
 
-        .badge {
-            background: #3b82f6;
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
             color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            font-weight: 600;
+            border-color: rgba(255,255,255,0.3);
         }
 
-        .badge-orange {
-            background: #f59e0b;
-        }
-
-        .frames {
+        /* ── Main Layout ── */
+        .frames-container {
             display: flex;
             flex: 1;
-            gap: 4px;
-            background: #e2e8f0;
+            padding: 20px;
+            gap: 20px;
+            overflow: hidden;
         }
 
-        .frame-container {
+        .frame-card {
             flex: 1;
             display: flex;
             flex-direction: column;
-            background: white;
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
         }
 
         .frame-header {
-            padding: 0.5rem 1rem;
-            background: #f1f5f9;
+            padding: 12px 20px;
+            background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #64748b;
+            color: var(--text-muted);
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .status-pill.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pill.syncing {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
         }
 
         iframe {
@@ -88,61 +179,108 @@
             width: 100%;
             height: 100%;
         }
+
+        /* ── Footer / Debug Info ── */
+        .debug-bar {
+            background: #fff;
+            border-top: 1px solid #e2e8f0;
+            padding: 8px 2rem;
+            display: flex;
+            gap: 24px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            align-items: center;
+        }
+
+        .debug-item b { color: var(--text-main); }
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #e11d48;
+            font-family: SFMono-Regular, Consolas, monospace;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 960px) {
+            .frames-container { flex-direction: column; overflow-y: auto; }
+            .frame-card { min-height: 600px; }
+            header { flex-direction: column; gap: 15px; align-items: flex-start; }
+            .header-badges { margin-left: 0; }
+        }
     </style>
 </head>
 
 <body>
     <header>
         <div class="brand">
-            <h1>🚀 awesome-node-auth Angular SSR Demo</h1>
-            <span class="badge">PROD PREVIEW</span>
+            <span class="brand-icon">🔐</span>
+            <h1>awesome-node-auth</h1>
+            <div class="header-badges">
+                <a href="https://www.npmjs.com/package/ng-awesome-node-auth" target="_blank" class="badge-link badge-ng">
+                    ng-auth <b>v1.5.0</b>
+                </a>
+                <a href="https://www.npmjs.com/package/awesome-node-auth" target="_blank" class="badge-link badge-node">
+                    node-auth <b>v1.5.0</b>
+                </a>
+            </div>
         </div>
-        <div class="info">
-            <div>🧹 <b>Auto-Cleanup:</b> every 5 minutes</div>
-            <div>🔑 <b>Admin Secret:</b> <code id="admin-secret"></code></div>
-            <div class="badge badge-orange">LIVE SYNC ENABLED</div>
-        </div>
+
+        <nav class="nav-links">
+            <a href="https://awesomenodeauth.com" target="_blank" class="nav-link">📖 Wiki</a>
+            <a href="https://github.com/nik2208/awesome-node-auth" target="_blank" class="nav-link">⭐ Node API</a>
+            <a href="https://github.com/nik2208/ng-awesome-node-auth" target="_blank" class="nav-link">⭐ Angular Lib</a>
+        </nav>
     </header>
 
-    <div class="frames">
-        <div class="frame-container">
+    <div class="frames-container">
+        <!-- Dashboard / Consumer View -->
+        <div class="frame-card">
             <div class="frame-header">
-                <span>LOGIN PAGE (Consumer View)</span>
-                <span id="login-status">Synced</span>
+                <span>USER DASHBOARD (Angular SSR)</span>
+                <div id="login-status-pill" class="status-pill active">
+                    <span class="status-dot"></span>
+                    <span id="login-status-text">Live Sync Active</span>
+                </div>
             </div>
-            <iframe id="login-frame" src="/?view=app"></iframe>
+            <iframe id="login-frame" src="/?view=app" title="User View"></iframe>
         </div>
-        <div class="frame-container">
+
+        <!-- Admin Control View -->
+        <div class="frame-card">
             <div class="frame-header">
-                <span>ADMIN PANEL (Control View)</span>
-                <span id="admin-status">Active</span>
+                <span>ADMIN CONTROL PANEL</span>
+                <div class="status-pill active">
+                    <span class="status-dot"></span>
+                    <span>Admin Session</span>
+                </div>
             </div>
-            <iframe id="admin-frame" src="/admin/auth"></iframe>
+            <iframe id="admin-frame" src="/admin/auth" title="Admin View"></iframe>
         </div>
+    </div>
+
+    <div class="debug-bar">
+        <div class="debug-item">🚿 <b>Auto-Cleanup:</b> Every 5m</div>
+        <div class="debug-item">🔑 <b>Admin Secret:</b> <code id="admin-secret">admin-secret-key-change-in-production</code></div>
+        <div class="debug-item">🌐 <b>Environment:</b> <span>Production Preview</span></div>
     </div>
 
     <script>
         const adminFrame = document.getElementById('admin-frame');
         const loginFrame = document.getElementById('login-frame');
-        const adminSecretEl = document.getElementById('admin-secret');
-
-        // Fetch config to show admin secret
-        fetch('/api/auth/ui/config')
-            .then(r => r.json())
-            .then(config => {
-                // Since we can't easily get the raw secret, we show the placeholder or the one from env if we had it
-                // Actually, let's just use a default or ask server to provide it in a demo endpoint
-                adminSecretEl.textContent = 'admin-secret-key-change-in-production';
-            });
+        const statusPill = document.getElementById('login-status-pill');
+        const statusText = document.getElementById('login-status-text');
 
         // Strategy: Monitor the Admin Iframe for successful save requests
-        // We do this by intercepting XHR/Fetch in the child iframe because they are same-origin
         function setupSync() {
             try {
                 const win = adminFrame.contentWindow;
                 if (!win || !win.fetch) return;
 
-                // Wrap the child's fetch
+                // Wrap the child's fetch if not already patched
+                if (win._isPatched) return;
+                win._isPatched = true;
+
                 const originalFetch = win.fetch;
                 win.fetch = function (...args) {
                     const url = args[0];
@@ -154,15 +292,17 @@
                             (typeof url === 'string' && url.includes('/api/settings/ui')) &&
                             options?.method === 'PATCH') {
 
-                            console.log('[Demo] UI Settings saved detected! Reloading login iframe...');
-                            document.getElementById('login-status').textContent = 'Reloading...';
-                            document.getElementById('login-status').style.color = '#f59e0b';
+                            console.log('[Demo] UI Settings saved! Reloading dashboard...');
+                            
+                            statusPill.className = 'status-pill syncing';
+                            statusText.textContent = 'Syncing Changes...';
 
-                            // Give the server a tiny moment to commit (even if in-memory)
                             setTimeout(() => {
                                 loginFrame.contentWindow.location.reload();
-                                document.getElementById('login-status').textContent = 'Synced';
-                                document.getElementById('login-status').style.color = '#3b82f6';
+                                setTimeout(() => {
+                                    statusPill.className = 'status-pill active';
+                                    statusText.textContent = 'Live Sync Active';
+                                }, 1000);
                             }, 500);
                         }
                         return response;
@@ -170,13 +310,11 @@
                 };
                 console.log('[Demo] Sync bridge established');
             } catch (e) {
-                // May fail if iframe is cross-origin or not loaded yet
-                console.warn('[Demo] Sync bridge waiting for iframe load...');
+                // Cross-origin or not loaded yet
             }
         }
 
         adminFrame.onload = setupSync;
-        // Periodic check to ensure it stays patched (navigation in iframe might reset it)
         setInterval(setupSync, 2000);
     </script>
 </body>
