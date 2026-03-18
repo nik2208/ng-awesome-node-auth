@@ -27,6 +27,16 @@ export interface AuthUser {
     permissions?: string[];
 }
 
+export interface SessionInfo {
+    sessionHandle: string;
+    userId: string;
+    userAgent?: string;
+    ipAddress?: string;
+    createdAt: string;
+    lastActive: string;
+    [key: string]: unknown;
+}
+
 /**
  * Full-featured session management service for awesome-node-auth backends.
  *
@@ -74,6 +84,27 @@ export class AuthService {
         return this.http.get<AuthUser>(`${this.opts.apiPrefix}/me`, { withCredentials: true }).pipe(
             tap(user => { this._initialized = true; this._user.set(user); }),
             catchError(() => { this._initialized = true; this._user.set(null); return of(null); })
+        );
+    }
+
+    /**
+     * Fetch all active sessions for the currently authenticated user.
+     * Requires `ISessionStore` on the server with `getSessionsForUser` implemented.
+     */
+    getActiveSessions(): Observable<SessionInfo[]> {
+        return this.http.get<{ sessions: SessionInfo[] }>(`${this.opts.apiPrefix}/sessions`, { withCredentials: true }).pipe(
+            map(res => res.sessions || []),
+            catchError(() => of([]))
+        );
+    }
+
+    /**
+     * Revoke a specific session by its handle.
+     */
+    revokeSession(sessionHandle: string): Observable<{ success: boolean; error?: string }> {
+        return this.http.delete<{ success: boolean }>(`${this.opts.apiPrefix}/sessions/${encodeURIComponent(sessionHandle)}`, { withCredentials: true }).pipe(
+            map(res => ({ success: !!res.success })),
+            catchError(err => of({ success: false, error: err.error?.error || 'Failed to revoke session' }))
         );
     }
 

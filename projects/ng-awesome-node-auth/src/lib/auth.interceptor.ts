@@ -56,6 +56,12 @@ export const authInterceptor: HttpInterceptorFn = (
                 (err.status === 401 || err.status === 403) &&
                 !isAuthEndpoint(req.url, opts.apiPrefix)
             ) {
+                // SESSION_REVOKED: permanent failure — skip refresh to avoid looping.
+                // Call logout() to clear state and redirect as per config.
+                if ((err.error as { code?: string } | null)?.code === 'SESSION_REVOKED') {
+                    authService.logout();
+                    return throwError(() => err);
+                }
                 return handleUnauthorized(req, next, authService, opts, platformId);
             }
             return throwError(() => err);

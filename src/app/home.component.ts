@@ -28,14 +28,35 @@ import { AuthService } from 'ng-awesome-node-auth';
               @if (u.isEmailVerified) {
                 <li><strong style="color: green;">Email Verified: ✓</strong></li>
               }
+              @if (u.isTotpEnabled) {
+                <li><strong style="color: blue;">2FA: Enabled (TOTP)</strong></li>
+              }
+              @if (u.roles && u.roles.length > 0) {
+                <li><strong>Roles:</strong> {{ u.roles.join(', ') }}</li>
+              }
+              @if (u.permissions && u.permissions.length > 0) {
+                <li><strong>Permissions:</strong> {{ u.permissions.length }} active</li>
+              }
+              @if (u.metadata && hasKeys(u.metadata)) {
+                <li><strong>Metadata:</strong> {{ u.metadata | json }}</li>
+              }
             </ul>
           }
         </div>
 
         <div class="actions">
           <button (click)="onLogout()" class="logout-btn">Logout</button>
+          
+          @if (user()?.isTotpEnabled) {
+            <button (click)="onDisable2fa()" class="disable-2fa-btn">Disable 2FA</button>
+          }
+
           <a href="/admin/auth" target="_blank" class="admin-link">Open Admin Panel</a>
         </div>
+
+        @if (statusMsg) {
+          <p class="status-msg" [class.error]="isError">{{ statusMsg }}</p>
+        }
       } @else {
         <p>You are not logged in. Please <a href="/api/auth/login.html">login first</a>.</p>
       }
@@ -123,9 +144,33 @@ import { AuthService } from 'ng-awesome-node-auth';
       background: #1565c0;
     }
 
-    p {
-      color: #666;
-      font-size: 1rem;
+    .status-msg {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-size: 14px;
+    }
+
+    .status-msg.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .disable-2fa-btn {
+      background: #ff9800;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+
+    .disable-2fa-btn:hover {
+      background: #f57c00;
     }
 
     a {
@@ -144,6 +189,33 @@ export class HomeComponent {
 
   // Signal-based user getter (read-only signal from AuthService)
   user = this.authService.user;
+
+  statusMsg = '';
+  isError = false;
+
+  hasKeys(obj: any): boolean {
+    return obj && Object.keys(obj).length > 0;
+  }
+
+  onDisable2fa() {
+    if (!confirm('Are you sure you want to disable 2FA?')) return;
+    
+    this.authService.disable2fa().subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.statusMsg = '2FA has been disabled successfully.';
+          this.isError = false;
+        } else {
+          this.statusMsg = res.error || 'Failed to disable 2FA.';
+          this.isError = true;
+        }
+      },
+      error: (err) => {
+        this.statusMsg = 'An unexpected error occurred.';
+        this.isError = true;
+      }
+    });
+  }
 
   onLogout() {
     this.authService.logout();
