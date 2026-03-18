@@ -19,6 +19,22 @@ export interface AuthUser {
     isTotpEnabled?: boolean;
     hasPassword?: boolean;
     lastLogin?: Date;
+    /** Present when the backend is configured with a metadataStore. */
+    metadata?: Record<string, unknown>;
+    /** Present when the backend is configured with an rbacStore. */
+    roles?: string[];
+    /** Present when the backend is configured with an rbacStore. */
+    permissions?: string[];
+}
+
+export interface SessionInfo {
+    sessionHandle: string;
+    userId: string;
+    userAgent?: string;
+    ipAddress?: string;
+    createdAt: string;
+    lastActive: string;
+    [key: string]: unknown;
 }
 
 /**
@@ -71,10 +87,34 @@ export class AuthService {
         );
     }
 
+    /**
+     * Fetch all active sessions for the currently authenticated user.
+     * Requires `ISessionStore` on the server with `getSessionsForUser` implemented.
+     */
+    getActiveSessions(): Observable<SessionInfo[]> {
+        return this.http.get<{ sessions: SessionInfo[] }>(`${this.opts.apiPrefix}/sessions`, { withCredentials: true }).pipe(
+            map(res => res.sessions || []),
+            catchError(() => of([]))
+        );
+    }
+
+    /**
+     * Revoke a specific session by its handle.
+     */
+    revokeSession(sessionHandle: string): Observable<{ success: boolean; error?: string }> {
+        return this.http.delete<{ success: boolean }>(`${this.opts.apiPrefix}/sessions/${encodeURIComponent(sessionHandle)}`, { withCredentials: true }).pipe(
+            map(res => ({ success: !!res.success })),
+            catchError(err => of({ success: false, error: err.error?.error || 'Failed to revoke session' }))
+        );
+    }
+
     refreshToken(): Observable<{ success: boolean; error?: string }> {
-        return this.http.post<{ success: boolean }>(`${this.opts.apiPrefix}/refresh`, {}, { withCredentials: true }).pipe(
-            map(() => ({ success: true })),
-            catchError(err => { this._user.set(null); return of({ success: false, error: err.error?.error || 'Refresh failed' }); })
+        return this.http.post<any>(`${this.opts.apiPrefix}/refresh`, {}, { withCredentials: true }).pipe(
+            map(res => ({ success: res && res.success !== false })),
+            catchError(err => { 
+                this._user.set(null); 
+                return of({ success: false, error: err.error?.error || 'Refresh failed' }); 
+            })
         );
     }
 
@@ -114,10 +154,9 @@ export class AuthService {
         );
     }
 
-    register(email: string, password: string, firstName: string, lastName: string): Observable<{ success: boolean; error?: string }> {
-        return this.http.post<{ success: boolean; user: AuthUser }>(`${this.opts.apiPrefix}/register`, { email, password, firstName, lastName }, { withCredentials: true }).pipe(
-            tap(res => { if (res.user) this._user.set(res.user); }),
-            map(() => ({ success: true })),
+    register(email: string, password: string, firstName: string, lastName: string): Observable<{ success: boolean; userId?: string; error?: string }> {
+        return this.http.post<{ success: boolean; userId?: string }>(`${this.opts.apiPrefix}/register`, { email, password, firstName, lastName }, { withCredentials: true }).pipe(
+            map(res => ({ success: true, userId: res.userId })),
             catchError(err => of({ success: false, error: err.error?.error || 'Registration failed' }))
         );
     }
@@ -239,6 +278,13 @@ export class AuthService {
         );
     }
 
+    disable2fa(): Observable<{ success: boolean; error?: string }> {
+        return this.http.post<{ success: boolean }>(`${this.opts.apiPrefix}/2fa/disable`, {}, { withCredentials: true }).pipe(
+            switchMap(res => res.success ? this.checkSession().pipe(map(() => ({ success: true }))) : of({ success: false })),
+            catchError(err => of({ success: false, error: err.error?.error || 'Failed to disable 2FA' }))
+        );
+    }
+
     // ── Email Verification ─────────────────────────────────────────────────
 
     resendVerificationEmail(): Observable<{ success: boolean; error?: string }> {
@@ -316,7 +362,12 @@ export class AuthService {
 
     deleteAccount(): Observable<{ success: boolean; error?: string }> {
         return this.http.delete<{ success: boolean }>(`${this.opts.apiPrefix}/account`, { withCredentials: true }).pipe(
-            tap(() => { this._user.set(null); if (isPlatformBrowser(this.platformId)) window.location.href = this.opts.loginUrl; }),
+            tap(() => { 
+                this._user.set(null); 
+                if (!this.opts.headless && isPlatformBrowser(this.platformId)) {
+                    window.location.href = this.opts.loginUrl;
+                }
+            }),
             map(() => ({ success: true })),
             catchError(err => of({ success: false, error: err.error?.error || 'Failed to delete account' }))
         );
@@ -330,7 +381,7 @@ export class AuthService {
     private _doLogout(): void {
         this._logoutInProgress = false;
         this._user.set(null);
-        if (isPlatformBrowser(this.platformId)) {
+        if (!this.opts.headless && isPlatformBrowser(this.platformId)) {
             window.location.href = this.opts.loginUrl;
         }
     }

@@ -45,8 +45,9 @@ export const authInterceptor: HttpInterceptorFn = (
         return next(req);
     }
 
-    // ── Browser: attach CSRF token ───────────────────────────────────────────
-    const outgoing = withCsrf(req);
+    // ── Browser: attach CSRF token only for backend requests ────────────────
+    const isBackendRequest = checkIsBackendRequest(req.url, opts.apiPrefix, platformId);
+    const outgoing = isBackendRequest ? withCsrf(req) : req;
 
     return next(outgoing).pipe(
         catchError((err: unknown) => {
@@ -55,7 +56,13 @@ export const authInterceptor: HttpInterceptorFn = (
                 (err.status === 401 || err.status === 403) &&
                 !isAuthEndpoint(req.url, opts.apiPrefix)
             ) {
-                return handleUnauthorized(req, next, authService, opts.apiPrefix, platformId, opts.loginUrl);
+                // SESSION_REVOKED: permanent failure — skip refresh to avoid looping.
+                // Call logout() to clear state and redirect as per config.
+                if ((err.error as { code?: string } | null)?.code === 'SESSION_REVOKED') {
+                    authService.logout();
+                    return throwError(() => err);
+                }
+                return handleUnauthorized(req, next, authService, opts, platformId);
             }
             return throwError(() => err);
         })
@@ -70,10 +77,11 @@ function handleUnauthorized(
     req: HttpRequest<unknown>,
     next: HttpHandlerFn,
     authService: AuthService,
-    apiPrefix: string,
-    platformId: object,
-    loginUrl: string
+    opts: ReturnType<typeof resolveOptions>,
+    platformId: object
 ): Observable<HttpEvent<unknown>> {
+    const { apiPrefix, loginUrl, headless } = opts;
+    
     if (!_refreshInProgress) {
         _refreshInProgress = authService.refreshToken().pipe(
             shareReplay(1),
@@ -89,15 +97,28 @@ function handleUnauthorized(
             // Refresh failed. Clear user state.
             authService._setUser(null);
 
-            // Only force redirect for actual API calls, not for the initial session check.
-            // The authGuard/guestGuard will handle the redirect for /me natively.
-            if (!req.url.includes(`${apiPrefix}/me`) && isPlatformBrowser(platformId)) {
+            // Redirection logic: only if NOT in headless mode and NOT an initial session check
+            if (!headless && !req.url.includes(`${apiPrefix}/me`) && isPlatformBrowser(platformId)) {
                 window.location.href = loginUrl;
             }
 
             return throwError(() => new Error('Session expired'));
         })
     );
+}
+
+function checkIsBackendRequest(url: string, prefix: string, platformId: object): boolean {
+    if (!isPlatformBrowser(platformId)) return false;
+    try {
+        const pageBase = window.location.href;
+        const backendOrigin = prefix.startsWith('http')
+            ? new URL(prefix).origin
+            : new URL(pageBase).origin;
+        const requestOrigin = new URL(url, pageBase).origin;
+        return backendOrigin === requestOrigin;
+    } catch {
+        return false;
+    }
 }
 
 function withCsrf(req: HttpRequest<unknown>): HttpRequest<unknown> {
@@ -116,6 +137,11 @@ function isAuthEndpoint(url: string, prefix: string): boolean {
         `${prefix}/login`,
         `${prefix}/logout`,
         `${prefix}/refresh`,
+        `${prefix}/register`,
+        `${prefix}/forgot-password`,
+        `${prefix}/reset-password`,
+        `${prefix}/2fa/verify`,
+        `${prefix}/verify-email`,
         // /me is intentionally omitted so 401s on it trigger a token refresh
     ].some(p => url.includes(p));
 }
