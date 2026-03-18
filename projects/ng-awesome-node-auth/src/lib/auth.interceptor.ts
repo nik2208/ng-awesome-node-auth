@@ -56,6 +56,12 @@ export const authInterceptor: HttpInterceptorFn = (
                 (err.status === 401 || err.status === 403) &&
                 !isAuthEndpoint(req.url, opts.apiPrefix)
             ) {
+                // SESSION_REVOKED: permanent failure — skip refresh to avoid looping.
+                // Call logout() to clear state and redirect as per config.
+                if ((err.error as { code?: string } | null)?.code === 'SESSION_REVOKED') {
+                    authService.logout();
+                    return throwError(() => err);
+                }
                 return handleUnauthorized(req, next, authService, opts, platformId);
             }
             return throwError(() => err);
@@ -134,7 +140,7 @@ function isAuthEndpoint(url: string, prefix: string): boolean {
         `${prefix}/register`,
         `${prefix}/forgot-password`,
         `${prefix}/reset-password`,
-        `${prefix}/2fa`,
+        `${prefix}/2fa/verify`,
         `${prefix}/verify-email`,
         // /me is intentionally omitted so 401s on it trigger a token refresh
     ].some(p => url.includes(p));
