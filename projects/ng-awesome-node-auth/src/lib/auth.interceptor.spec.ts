@@ -15,7 +15,7 @@ describe('authInterceptor', () => {
                 provideHttpClient(withInterceptors([authInterceptor])),
                 provideHttpClientTesting(),
                 { provide: NG_AUTH_OPTIONS, useValue: { apiPrefix } },
-                { provide: AuthService, useValue: { refreshToken: () => {} } }
+                { provide: AuthService, useValue: { logout: () => {}, refreshToken: () => {} } }
             ]
         });
 
@@ -71,5 +71,48 @@ describe('authInterceptor', () => {
 
         const req = httpMock.expectOne('/auth/me');
         expect(req.request.headers.has('X-CSRF-Token')).toBe(true);
+    });
+
+    describe('SESSION_REVOKED handling', () => {
+        let localHttp: HttpClient;
+        let localHttpMock: HttpTestingController;
+        let logoutCalled: boolean;
+
+        beforeEach(() => {
+            logoutCalled = false;
+            TestBed.configureTestingModule({
+                providers: [
+                    provideHttpClient(withInterceptors([authInterceptor])),
+                    provideHttpClientTesting(),
+                    { provide: NG_AUTH_OPTIONS, useValue: { apiPrefix: '/api/auth' } },
+                    {
+                        provide: AuthService,
+                        useValue: {
+                            logout: () => { logoutCalled = true; },
+                            refreshToken: () => { throw new Error('refresh should not be called for SESSION_REVOKED'); }
+                        }
+                    }
+                ]
+            });
+            localHttp = TestBed.inject(HttpClient);
+            localHttpMock = TestBed.inject(HttpTestingController);
+        });
+
+        afterEach(() => {
+            localHttpMock.verify();
+        });
+
+        it('should call logout() immediately and NOT attempt token refresh when SESSION_REVOKED is returned', () => {
+            localHttp.get('/protected-resource').subscribe({ error: () => {} });
+
+            const req = localHttpMock.expectOne('/protected-resource');
+            req.flush(
+                { code: 'SESSION_REVOKED', error: 'Session has been revoked' },
+                { status: 401, statusText: 'Unauthorized' }
+            );
+
+            expect(logoutCalled).toBe(true);
+            localHttpMock.expectNone('/api/auth/refresh');
+        });
     });
 });
