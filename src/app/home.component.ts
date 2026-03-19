@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from 'ng-awesome-node-auth';
 
-const NG_LIB_VERSION = '1.5.0';
-const NODE_LIB_VERSION = '1.5.0';
+const NG_LIB_VERSION = '1.5.1';
+const NODE_LIB_VERSION = '1.5.1';
 
 /**
  * Root wrapper page for the ng-awesome-node-auth demo.
