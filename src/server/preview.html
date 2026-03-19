@@ -48,7 +48,9 @@
             gap: 12px;
         }
 
-        .brand-icon { font-size: 1.8rem; }
+        .brand-icon {
+            font-size: 1.8rem;
+        }
 
         .brand h1 {
             font-size: 1.25rem;
@@ -77,17 +79,22 @@
             font-size: 0.75rem;
             font-weight: 600;
             color: white;
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.2s;
         }
 
         .badge-link:hover {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-1px);
         }
 
-        .badge-ng { background: rgba(196, 59, 60, 0.8); }
-        .badge-node { background: rgba(51, 153, 51, 0.8); }
+        .badge-ng {
+            background: rgba(196, 59, 60, 0.8);
+        }
+
+        .badge-node {
+            background: rgba(51, 153, 51, 0.8);
+        }
 
         .nav-links {
             display: flex;
@@ -100,7 +107,7 @@
             font-size: 0.85rem;
             padding: 6px 14px;
             border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             transition: all 0.2s;
             display: flex;
             align-items: center;
@@ -108,9 +115,9 @@
         }
 
         .nav-link:hover {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             color: white;
-            border-color: rgba(255,255,255,0.3);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         /* ── Main Layout ── */
@@ -192,7 +199,10 @@
             align-items: center;
         }
 
-        .debug-item b { color: var(--text-main); }
+        .debug-item b {
+            color: var(--text-main);
+        }
+
         code {
             background: #f1f5f9;
             padding: 2px 6px;
@@ -203,10 +213,24 @@
 
         /* ── Mobile ── */
         @media (max-width: 960px) {
-            .frames-container { flex-direction: column; overflow-y: auto; }
-            .frame-card { min-height: 600px; }
-            header { flex-direction: column; gap: 15px; align-items: flex-start; }
-            .header-badges { margin-left: 0; }
+            .frames-container {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .frame-card {
+                min-height: 600px;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .header-badges {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
@@ -217,11 +241,12 @@
             <span class="brand-icon">🔐</span>
             <h1>awesome-node-auth</h1>
             <div class="header-badges">
-                <a href="https://www.npmjs.com/package/ng-awesome-node-auth" target="_blank" class="badge-link badge-ng">
-                    ng-auth <b>v1.5.0</b>
+                <a href="https://www.npmjs.com/package/ng-awesome-node-auth" target="_blank"
+                    class="badge-link badge-ng">
+                    ng-auth <b>v1.5.1</b>
                 </a>
                 <a href="https://www.npmjs.com/package/awesome-node-auth" target="_blank" class="badge-link badge-node">
-                    node-auth <b>v1.5.0</b>
+                    node-auth <b>v1.5.1</b>
                 </a>
             </div>
         </div>
@@ -261,7 +286,8 @@
 
     <div class="debug-bar">
         <div class="debug-item">🚿 <b>Auto-Cleanup:</b> Every 5m</div>
-        <div class="debug-item">🔑 <b>Admin Secret:</b> <code id="admin-secret">admin-secret-key-change-in-production</code></div>
+        <div class="debug-item">🔑 <b>Admin Secret:</b> <code
+                id="admin-secret">admin-secret-key-change-in-production</code></div>
         <div class="debug-item">🌐 <b>Environment:</b> <span>Production Preview</span></div>
     </div>
 
@@ -293,7 +319,7 @@
                             options?.method === 'PATCH') {
 
                             console.log('[Demo] UI Settings saved! Reloading dashboard...');
-                            
+
                             statusPill.className = 'status-pill syncing';
                             statusText.textContent = 'Syncing Changes...';
 
