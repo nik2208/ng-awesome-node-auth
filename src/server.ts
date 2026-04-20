@@ -12,6 +12,7 @@ import { requestContext } from './server/utils/request-context';
 import { createAdminRouter, createApiKeyMiddleware } from 'awesome-node-auth';
 import {
   userStore,
+  authConfig,
   settingsStore,
   rbacStore,
   metadataStore,
@@ -19,8 +20,9 @@ import {
   apiKeyStore,
   webhookStore,
   telemetryStore,
+  templateStore,
+  linkedAccountsStore,
   uploadDir,
-  ADMIN_SECRET,
 } from './server/auth.config';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -38,6 +40,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 app.use((req, res, next) => {
+  if (req.path.includes('/admin/auth')) {
+    console.log(`[DEBUG-COOKIE] Request to ${req.path}`);
+    console.log(`[DEBUG-COOKIE] Headers:`, JSON.stringify(req.headers['cookie']));
+    console.log(`[DEBUG-COOKIE] Parsed Cookies:`, req.cookies);
+  }
   requestContext.run({ req }, () => next());
 });
 
@@ -58,22 +65,35 @@ authPaths.forEach(p => {
 app.use('/api/auth', authRoutes);
 console.log('[SERVER] Auth routes mounted');
 
-// ---- 4. Mount the admin router ----
-// Now with full set of stores to enable all tabs
+const rootEmail = process.env['AUTH_ADMIN_ROOT_EMAIL'];
+const rootHash = process.env['AUTH_ADMIN_ROOT_PASSWORD_HASH'];
+const rootUser = (rootEmail && rootHash) ? { email: rootEmail, passwordHash: rootHash } : undefined;
+if (rootUser) {
+  console.log('[SERVER] Admin root user enabled:', rootEmail);
+}
+
 const adminRouter = createAdminRouter(userStore, {
-  adminSecret: ADMIN_SECRET,
+  accessPolicy: 'first-user',
+  jwtSecret: process.env['ACCESS_TOKEN_SECRET'] || authConfig.accessTokenSecret,
+  rootUser,
   settingsStore,
   rbacStore,
   userMetadataStore: metadataStore,
   sessionStore,
   apiKeyStore,
   webhookStore,
+  templateStore,
+  linkedAccountsStore,
   uploadDir,
   apiPrefix: '/api/auth',
-  swagger: true, // Enable swagger UI for documentation
+  swagger: true,
 });
 app.use('/admin/auth', adminRouter);
-console.log('[SERVER] Admin routes mounted');
+console.log('[SERVER] Auth routes mounted');
+
+console.log('[SERVER] NODE_ENV:', process.env['NODE_ENV']);
+console.log('[SERVER] Cookie Secure:', authConfig.cookieOptions?.secure);
+console.log('[SERVER] Cookie SameSite:', authConfig.cookieOptions?.sameSite);
 
 // ---- Maintenance Timer: Clear in-memory users every 30 minutes ----
 setInterval(() => {

@@ -4,6 +4,7 @@ import {
   AuthError,
   BaseUser,
   GoogleStrategy,
+  MemoryTemplateStore,
 } from 'awesome-node-auth';
 import { InMemoryUserStore } from './in-memory-user-store';
 import { InMemorySettingsStore } from './in-memory-settings-store';
@@ -11,6 +12,7 @@ import { InMemorySessionStore } from './in-memory-session-store';
 import { InMemoryApiKeyStore } from './in-memory-api-key-store';
 import { InMemoryWebhookStore } from './in-memory-webhook-store';
 import { InMemoryTelemetryStore } from './in-memory-telemetry-store';
+import { InMemoryLinkedAccountsStore } from './in-memory-linked-accounts-store';
 
 import { join } from 'node:path';
 
@@ -24,12 +26,13 @@ userStore.setSessionStore(sessionStore);
 export const apiKeyStore = new InMemoryApiKeyStore();
 export const webhookStore = new InMemoryWebhookStore();
 export const telemetryStore = new InMemoryTelemetryStore();
+export const templateStore = new MemoryTemplateStore();
+export const linkedAccountsStore = new InMemoryLinkedAccountsStore();
 
 export const uploadDir = join(process.cwd(), 'public/uploads');
 
 // ---- Configure Auth ----
 const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key-change-in-production';
-const ADMIN_SECRET = process.env['ADMIN_SECRET'] || 'admin-secret-key-change-in-production';
 
 export const authConfig: AuthConfig = {
   apiPrefix: '/api/auth',
@@ -38,7 +41,8 @@ export const authConfig: AuthConfig = {
   accessTokenExpiresIn: '15m',
   refreshTokenExpiresIn: '7d',
   cookieOptions: {
-    secure: process.env['NODE_ENV'] === 'production',
+    // FORCE secure: false on localhost to avoid redirect loops!
+    secure: (process.env['NODE_ENV'] === 'production') && !(process.env['SITE_URL'] || 'localhost').includes('localhost'),
     sameSite: 'lax',
   },
   ui: {
@@ -49,6 +53,7 @@ export const authConfig: AuthConfig = {
   },
   emailVerificationMode: (process.env['EMAIL_VERIFICATION_MODE'] || 'none') as 'none' | 'lazy' | 'strict',
   bcryptSaltRounds: 10,
+  templateStore,
   email: {
     siteUrl: process.env['SITE_URL'] || 'http://localhost:4200',
     sendWelcome: async (email: string, data: any) => {
@@ -117,5 +122,4 @@ export const googleStrategy = new MyGoogleStrategy();
 // ---- Instantiate AuthConfigurator ----
 export const authConfigurator = new AuthConfigurator(authConfig, userStore);
 
-// ---- Export admin secret for admin router ----
-export { ADMIN_SECRET };
+

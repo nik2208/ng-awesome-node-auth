@@ -1,10 +1,11 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, OnDestroy, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from 'ng-awesome-node-auth';
+import { Subscription } from 'rxjs';
 
-const NG_LIB_VERSION = '1.5.1';
-const NODE_LIB_VERSION = '1.5.1';
+const NG_LIB_VERSION = '1.8.1';
+const NODE_LIB_VERSION = '1.8.1';
 
 /**
  * Root wrapper page for the ng-awesome-node-auth demo.
@@ -48,6 +49,13 @@ const NODE_LIB_VERSION = '1.5.1';
 
     <!-- ═══════════ MAIN CONTENT ═══════════ -->
     <main class="page-main">
+
+      <!-- ── Toast notifications (SSE) ── -->
+      <div class="toast-container">
+        @for (t of toasts; track t.id) {
+          <div class="toast" [class.toast-exit]="t.exiting">{{ t.message }}</div>
+        }
+      </div>
 
       @if (authService.isAuthenticated()) {
 
@@ -96,11 +104,40 @@ const NODE_LIB_VERSION = '1.5.1';
           </div>
         </section>
 
+        <!-- ── Account Linking ── -->
+        <section class="linking-section">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-icon">🔗</span>
+              <h2>Linked Accounts</h2>
+            </div>
+
+            @if (linkedAccounts.length) {
+              <ul class="profile-list">
+                @for (acc of linkedAccounts; track acc.providerAccountId) {
+                  <li>
+                    <span class="label">{{ acc.provider }}</span>
+                    <span class="value">{{ acc.email || acc.name || acc.providerAccountId }}</span>
+                    <button (click)="onUnlink(acc.provider, acc.providerAccountId)" class="btn btn-danger btn-sm">Unlink</button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="linking-empty">No linked accounts yet.</p>
+            }
+
+            <div class="card-actions">
+              <button (click)="onLinkGoogle()" class="btn btn-outline btn-sm">Link Google Account</button>
+            </div>
+          </div>
+        </section>
+
         <!-- ── Embedded Admin Panel ── -->
         <section class="iframe-section">
           <div class="iframe-header">
             <span class="card-icon">🛡️</span>
             <h2>Admin Panel</h2>
+            <span class="admin-note">Session-based access · no password required for first user</span>
             <a href="/admin/auth" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
               Open in new tab ↗
             </a>
@@ -442,6 +479,62 @@ const NODE_LIB_VERSION = '1.5.1';
 
     .site-footer a:hover { text-decoration: underline; }
 
+    /* ── Toast notifications ────────────────────────────────── */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #2d3748;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      animation: toast-in .3s ease;
+      pointer-events: auto;
+    }
+
+    .toast-exit { opacity: 0; transition: opacity .3s ease; }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Linked Accounts ────────────────────────────────────── */
+    .linking-section { margin-bottom: 28px; }
+
+    .linking-empty {
+      padding: 16px 24px;
+      margin: 0;
+      color: #718096;
+      font-size: 0.9rem;
+    }
+
+    .linking-section .profile-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .linking-section .profile-list li .value { flex: 1; }
+
+    /* ── Admin note ─────────────────────────────────────────── */
+    .admin-note {
+      font-size: 0.75rem;
+      color: #718096;
+      flex: 1;
+      text-align: right;
+    }
+
     /* ── Responsive ─────────────────────────────────────────── */
     @media (max-width: 640px) {
       .site-header { padding: 12px 16px; }
@@ -450,18 +543,48 @@ const NODE_LIB_VERSION = '1.5.1';
     }
   `]
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit, OnDestroy {
   readonly ngVersion = NG_LIB_VERSION;
   readonly nodeVersion = NODE_LIB_VERSION;
 
   authService = inject(AuthService);
   private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
   // Signal-based user getter (read-only signal from AuthService)
   user = this.authService.user;
 
   statusMsg = '';
   isError = false;
+
+  // ── Toast state ──
+  toasts: { id: number; message: string; exiting: boolean }[] = [];
+  private toastId = 0;
+  private sseSub?: Subscription;
+
+  // ── Linked accounts ──
+  linkedAccounts: { provider: string; providerAccountId: string; email?: string; name?: string; linkedAt?: Date }[] = [];
+
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.sseSub = this.authService.getToolsStream().subscribe({
+        next: (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            this.addToast(data.message || data.type || 'New event');
+          } catch {
+            this.addToast(event.data || 'New event');
+          }
+        },
+        error: () => { /* SSE reconnection is handled by the browser */ },
+      });
+      this.loadLinkedAccounts();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.sseSub?.unsubscribe();
+  }
 
   hasKeys(obj: any): boolean {
     return obj && Object.keys(obj).length > 0;
@@ -493,6 +616,54 @@ export class HomeComponent {
     setTimeout(() => {
       window.location.href = '/api/auth/ui/login';
     }, 100);
+  }
+
+  // ── Toast helpers ──
+
+  private addToast(message: string): void {
+    const id = ++this.toastId;
+    this.toasts.push({ id, message, exiting: false });
+    setTimeout(() => {
+      const t = this.toasts.find(x => x.id === id);
+      if (t) t.exiting = true;
+      setTimeout(() => { this.toasts = this.toasts.filter(x => x.id !== id); }, 300);
+    }, 5000);
+  }
+
+  // ── Account linking ──
+
+  loadLinkedAccounts(): void {
+    this.authService.getLinkedAccounts().subscribe(accounts => {
+      this.linkedAccounts = accounts;
+    });
+  }
+
+  onLinkGoogle(): void {
+    const email = this.user()?.email;
+    if (!email) return;
+    this.authService.requestLinkingEmail(email, 'google').subscribe(res => {
+      if (res.success) {
+        this.statusMsg = 'A linking confirmation email has been sent.';
+        this.isError = false;
+      } else {
+        this.statusMsg = res.error || 'Failed to request account linking.';
+        this.isError = true;
+      }
+    });
+  }
+
+  onUnlink(provider: string, providerAccountId: string): void {
+    if (!confirm(`Unlink ${provider} account?`)) return;
+    this.authService.unlinkAccount(provider, providerAccountId).subscribe(res => {
+      if (res.success) {
+        this.loadLinkedAccounts();
+        this.statusMsg = `${provider} account unlinked.`;
+        this.isError = false;
+      } else {
+        this.statusMsg = res.error || 'Failed to unlink account.';
+        this.isError = true;
+      }
+    });
   }
 }
 

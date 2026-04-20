@@ -19,9 +19,9 @@ import {
   apiKeyStore,
   webhookStore,
   telemetryStore,
+  linkedAccountsStore,
   googleStrategy,
   uploadDir,
-  ADMIN_SECRET,
 } from './auth.config';
 
 const router = Router();
@@ -31,7 +31,7 @@ const router = Router();
 // ---- 1. Event system setup ----
 const bus = new AuthEventBus();
 
-// ---- 2. Tools (SSE, Webhooks, Telemetry) ----
+// ---- 2. Tools (SSE, Webhooks, Telemetry, Notifications) ----
 const authTools = new AuthTools(bus, {
   telemetryStore,
   webhookStore,
@@ -40,6 +40,8 @@ const authTools = new AuthTools(bus, {
     heartbeatIntervalMs: 30000,
     deduplicate: true,
   },
+  userStore,
+  emailConfig: authConfig.email?.mailer,
 });
 
 // Note: AuthTools doesn't have a listen() method in this version.
@@ -59,6 +61,7 @@ router.use(
     rbacStore,
     metadataStore,
     sessionStore,
+    linkedAccountsStore,
     googleStrategy,
     uploadDir,
     onRegister: async (data: any, config: any, options: any) => {
