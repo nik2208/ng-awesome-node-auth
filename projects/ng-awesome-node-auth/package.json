@@ -1,6 +1,6 @@
 {
   "name": "ng-awesome-node-auth",
-  "version": "1.5.1",
+  "version": "1.8.3",
   "description": "Angular client library for the awesome-node-auth ecosystem",
   "author": "Nicola Brecciaroli",
   "license": "MIT",

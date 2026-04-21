@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID, signal, computed, Signal, WritableSignal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, of } from 'rxjs';
+import { Observable, of, EMPTY } from 'rxjs';
 import { tap, map, catchError, switchMap } from 'rxjs/operators';
 import { NG_AUTH_OPTIONS, resolveOptions, NgAuthOptions } from './auth.config';
 
@@ -25,6 +25,8 @@ export interface AuthUser {
     roles?: string[];
     /** Present when the backend is configured with an rbacStore. */
     permissions?: string[];
+    /** `true` when the user has admin privileges (v1.8.0+). */
+    isAdmin?: boolean;
 }
 
 export interface SessionInfo {
@@ -374,6 +376,20 @@ export class AuthService {
     }
 
     // ── Internal ─────────────────────────────────────────────────────────────
+
+    /**
+     * Subscribe to the Server-Sent Events stream from the AuthTools backend.
+     * Returns `EMPTY` during SSR (EventSource is browser-only).
+     */
+    getToolsStream(): Observable<MessageEvent> {
+        if (!isPlatformBrowser(this.platformId)) return EMPTY;
+        return new Observable<MessageEvent>(subscriber => {
+            const es = new EventSource(`${this.opts.apiPrefix}/tools/stream`, { withCredentials: true });
+            es.onmessage = (event) => subscriber.next(event);
+            es.onerror = (err) => subscriber.error(err);
+            return () => es.close();
+        });
+    }
 
     /** @internal used by authInterceptor */
     _setUser(user: AuthUser | null): void { this._user.set(user); }

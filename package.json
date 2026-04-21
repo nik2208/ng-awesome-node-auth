@@ -1,6 +1,6 @@
 {
   "name": "ng-awesome-node-auth-prj",
-  "version": "1.5.1",
+  "version": "1.8.4",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -54,7 +54,7 @@
     "@angular/platform-server": "^21.2.4",
     "@angular/router": "^21.2.4",
     "@angular/ssr": "^21.2.2",
-    "awesome-node-auth": "^1.5.1",
+    "awesome-node-auth": "1.8.4",
     "express": "^5.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
