@@ -4,8 +4,8 @@ import { Router } from '@angular/router';
 import { AuthService } from 'ng-awesome-node-auth';
 import { Subscription } from 'rxjs';
 
-const NG_LIB_VERSION = '1.8.1';
-const NODE_LIB_VERSION = '1.8.1';
+const NG_LIB_VERSION = '1.8.4';
+const NODE_LIB_VERSION = '1.8.4';
 
 /**
  * Root wrapper page for the ng-awesome-node-auth demo.
